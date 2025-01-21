@@ -99,7 +99,7 @@ public class MainController {
             return "AddVisit";
         }
         medicalClinicService.addVisit(visit);
-        return "redirect:/AllVisit";
+        return "redirect:/";
     }
 
     // Add Doctor

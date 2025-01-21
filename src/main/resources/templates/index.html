@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/main.css">
+    <title>main page</title>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid justify-content-around">
+        <a class="navbar-brand" href="/">Клиника "Да поможет вам Господь"
+            <img src="/css/img/holy-cross.png" alt="" width="30px" height="30px">
+        </a>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="AddDoctor">Добавить доктора</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AddPatient">Добавить пациента</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AddVisit">Добавить визит</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AddMedication">Добавить рецепт</a>
+                </li>
+            </ul>
+        </div>
+        <div class="navbar-nav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="AllDoctor">Врачи</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AllPatient">Пациенты</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AllMedication">Рецепты</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <ul class="navbar-nav me-auto mb-2 mb-lg-0 d-flex justify-content-center flex-row">
+
+    </ul>
+</div>
+<div class="container mt-5">
+    <h2>Список записей</h2>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Доктор</th>
+            <th>Пациент</th>
+            <th>Дата визита</th>
+            <th>Причина визита</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="visit : ${visits}">
+            <td th:text="${visit.id}"></td>
+            <td th:text="${visit.doctor.firstName} + ' ' + ${visit.doctor.lastName}"></td>
+            <td th:text="${visit.patient.firstName} + ' ' + ${visit.patient.lastName}"></td>
+            <td th:text="${visit.visitDate}"></td>
+            <td th:text="${visit.reasonForVisit}"></td>
+            <td>
+                <a class="btn btn-primary" th:href="@{/editVisit/{id}(id=${visit.id})}">Редактировать</a>
+                <form th:action="@{/deleteVisit/{id}(id=${visit.id})}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>Редактировать визит</title>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid justify-content-around">
+        <a class="navbar-brand" href="/">Клиника "Да поможет вам Господь"
+            <img src="/css/img/holy-cross.png" alt="" width="30px" height="30px">
+        </a>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="AddDoctor">Добавить доктора</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AddPatient">Добавить пациента</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AddVisit">Добавить визит</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AddMedication">Добавить рецепт</a>
+                </li>
+            </ul>
+        </div>
+        <div class="navbar-nav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="AllDoctor">Врачи</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AllPatient">Пациенты</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="AllMedication">Рецепты</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container mt-5">
+    <h2>Редактировать визит</h2>
+    <form th:action="@{/editVisit/{id}(id=${visit.id})}" th:object="${visit}" method="post">
+        <div class="mb-3">
+            <label for="doctor" class="form-label">Доктор</label>
+            <select class="form-select" id="doctor" th:field="*{doctor}" required>
+                <option th:each="doctor : ${doctors}" th:value="${doctor.id}" th:text="${doctor.firstName} + ' ' + ${doctor.lastName}"></option>
+            </select>
+            <div th:if="${#fields.hasErrors('doctor')}" th:errors="*{doctor}" class="text-danger"></div>
+        </div>
+        <div class="mb-3">
+            <label for="patient" class="form-label">Пациент</label>
+            <select class="form-select" id="patient" th:field="*{patient}" required>
+                <option th:each="patient : ${patients}" th:value="${patient.id}" th:text="${patient.firstName} + ' ' + ${patient.lastName}"></option>
+            </select>
+            <div th:if="${#fields.hasErrors('patient')}" th:errors="*{patient}" class="text-danger"></div>
+        </div>
+        <div class="mb-3">
+            <label for="visitDate" class="form-label">Дата визита</label>
+            <input type="datetime-local" class="form-control" id="visitDate" th:field="*{visitDate}" required>
+            <div th:if="${#fields.hasErrors('visitDate')}" th:errors="*{visitDate}" class="text-danger"></div>
+        </div>
+        <div class="mb-3">
+            <label for="reasonForVisit" class="form-label">Причина визита</label>
+            <input type="text" class="form-control" id="reasonForVisit" th:field="*{reasonForVisit}" title="Причина визита должна содержать только буквы, цифры и знаки препинания">
+            <div th:if="${#fields.hasErrors('reasonForVisit')}" th:errors="*{reasonForVisit}" class="text-danger"></div>
+        </div>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
+</div>
+</body>
+</html>

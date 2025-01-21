@@ -8,6 +8,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -34,7 +35,7 @@ public class Visit {
     @NotNull
     @FutureOrPresent
     @Column(name = "visit_date", nullable = false)
-    private Instant visitDate;
+    private LocalDate visitDate;
 
     @Pattern(regexp = "^[a-zA-Zа-яА-Я0-9\\s.,!?\"'()-]+$", message = "Reason for visit must contain only letters, digits, and punctuation")
     @Column(name = "reason_for_visit", length = Integer.MAX_VALUE)

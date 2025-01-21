@@ -45,7 +45,7 @@ public class Patient {
 
     @NotNull
     @Pattern(regexp = "^\\d{16}$", message = "Insurance number must be exactly 16 digits")
-    @Column(name = "insurance_number", nullable = false, length = 16)
+    @Column(name = "insurance_number", nullable = false, unique = true,length = 16)
     private String insuranceNumber;
 
     @Pattern(regexp = "^(A|B|AB|O)[+-]$", message = "Invalid blood type")

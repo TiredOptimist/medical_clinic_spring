@@ -7,7 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.medicalclinic.medical_clinic.entity.*;
-import ru.medicalclinic.medical_clinic.repository.*;
+import ru.medicalclinic.medical_clinic.service.MedicalClinicService;
 
 import java.util.Comparator;
 import java.util.List;
@@ -16,23 +16,20 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MainController {
 
-    private final DoctorRepository doctorRepository;
-    private final PatientRepository patientRepository;
-    private final VisitRepository visitRepository;
-    private final MedicationRepository medicationRepository;
+    private final MedicalClinicService medicalClinicService;
 
     @GetMapping("/")
     public String index(Model model) {
-        List<Visit> visits = visitRepository.findAll()
+        List<Visit> visits = medicalClinicService.getAllVisits()
                 .stream()
                 .sorted(Comparator.comparingLong(Visit::getId)).toList();
-        List<Doctor> doctors = doctorRepository.findAll()
+        List<Doctor> doctors = medicalClinicService.getAllDoctors()
                 .stream()
                 .sorted(Comparator.comparingLong(Doctor::getId)).toList();
-        List<Patient> patients = patientRepository.findAll()
+        List<Patient> patients = medicalClinicService.getAllPatients()
                 .stream()
                 .sorted(Comparator.comparingLong(Patient::getId)).toList();
-        List<Medication> medications = medicationRepository.findAll()
+        List<Medication> medications = medicalClinicService.getAllMedications()
                 .stream()
                 .sorted(Comparator.comparingLong(Medication::getId)).toList();
         model.addAttribute("doctors", doctors);
@@ -45,28 +42,28 @@ public class MainController {
 
     @GetMapping("/AllVisit")
     public String allVisit(Model model) {
-        List<Visit> visits = visitRepository.findAll();
+        List<Visit> visits = medicalClinicService.getAllVisits();
         model.addAttribute("visits", visits);
         return "AllVisit";
     }
 
     @GetMapping("/AllDoctor")
     public String allDoctor(Model model) {
-        List<Doctor> doctors = doctorRepository.findAll();
+        List<Doctor> doctors = medicalClinicService.getAllDoctors();
         model.addAttribute("doctors", doctors);
         return "AllDoctor";
     }
 
     @GetMapping("/AllPatient")
     public String allPatient(Model model) {
-        List<Patient> patients = patientRepository.findAll();
+        List<Patient> patients = medicalClinicService.getAllPatients();
         model.addAttribute("patients", patients);
         return "AllPatient";
     }
 
     @GetMapping("/AllMedication")
     public String allMedication(Model model) {
-        List<Medication> medications = medicationRepository.findAll();
+        List<Medication> medications = medicalClinicService.getAllMedications();
         model.addAttribute("medications", medications);
         return "AllMedication";
     }
@@ -83,7 +80,7 @@ public class MainController {
         if (bindingResult.hasErrors()) {
             return "AddPatient";
         }
-        patientRepository.save(patient);
+        medicalClinicService.addPatient(patient);
         return "redirect:/AllPatient";
     }
 
@@ -91,8 +88,8 @@ public class MainController {
     @GetMapping("/AddVisit")
     public String showAddVisitForm(Model model) {
         model.addAttribute("visit", new Visit());
-        model.addAttribute("doctors", doctorRepository.findAll());
-        model.addAttribute("patients", patientRepository.findAll());
+        model.addAttribute("doctors", medicalClinicService.getAllDoctors());
+        model.addAttribute("patients", medicalClinicService.getAllPatients());
         return "AddVisit";
     }
 
@@ -101,7 +98,7 @@ public class MainController {
         if (bindingResult.hasErrors()) {
             return "AddVisit";
         }
-        visitRepository.save(visit);
+        medicalClinicService.addVisit(visit);
         return "redirect:/AllVisit";
     }
 
@@ -117,7 +114,7 @@ public class MainController {
         if (bindingResult.hasErrors()) {
             return "AddDoctor";
         }
-        doctorRepository.save(doctor);
+        medicalClinicService.addDoctor(doctor);
         return "redirect:/AllDoctor";
     }
 
@@ -133,14 +130,16 @@ public class MainController {
         if (bindingResult.hasErrors()) {
             return "AddMedication";
         }
-        medicationRepository.save(medication);
+        medicalClinicService.addMedication(medication);
         return "redirect:/AllMedication";
     }
 
     // Edit Patient
     @GetMapping("/editPatient/{id}")
     public String showEditPatientForm(@PathVariable Long id, Model model) {
-        Patient patient = patientRepository.findById(id)
+        Patient patient = medicalClinicService.getAllPatients().stream()
+                .filter(p -> p.getId().equals(id))
+                .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Patient not found"));
         model.addAttribute("patient", patient);
         return "editPatient";
@@ -151,33 +150,20 @@ public class MainController {
         if (bindingResult.hasErrors()) {
             return "editPatient";
         }
-        Patient existingPatient = patientRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Patient not found"));
-
-        // Обновляем поля существующего пациента
-        existingPatient.setFirstName(updatedPatient.getFirstName());
-        existingPatient.setLastName(updatedPatient.getLastName());
-        existingPatient.setDateOfBirth(updatedPatient.getDateOfBirth());
-        existingPatient.setGender(updatedPatient.getGender());
-        existingPatient.setPhoneNumber(updatedPatient.getPhoneNumber());
-        existingPatient.setInsuranceNumber(updatedPatient.getInsuranceNumber());
-        existingPatient.setBloodType(updatedPatient.getBloodType());
-        existingPatient.setHeight(updatedPatient.getHeight());
-        existingPatient.setWeight(updatedPatient.getWeight());
-        existingPatient.setAttached(updatedPatient.getAttached());
-
-        patientRepository.save(existingPatient);
+        medicalClinicService.updatePatient(id, updatedPatient);
         return "redirect:/AllPatient";
     }
 
     // Edit Visit
     @GetMapping("/editVisit/{id}")
     public String showEditVisitForm(@PathVariable Long id, Model model) {
-        Visit visit = visitRepository.findById(id)
+        Visit visit = medicalClinicService.getAllVisits().stream()
+                .filter(v -> v.getId().equals(id))
+                .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Visit not found"));
         model.addAttribute("visit", visit);
-        model.addAttribute("doctors", doctorRepository.findAll()); // Передаем список врачей
-        model.addAttribute("patients", patientRepository.findAll()); // Передаем список пациентов
+        model.addAttribute("doctors", medicalClinicService.getAllDoctors());
+        model.addAttribute("patients", medicalClinicService.getAllPatients());
         return "editVisit";
     }
 
@@ -186,23 +172,16 @@ public class MainController {
         if (bindingResult.hasErrors()) {
             return "editVisit";
         }
-        Visit existingVisit = visitRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Visit not found"));
-
-        // Обновляем поля существующего визита
-        existingVisit.setDoctor(updatedVisit.getDoctor());
-        existingVisit.setPatient(updatedVisit.getPatient());
-        existingVisit.setVisitDate(updatedVisit.getVisitDate());
-        existingVisit.setReasonForVisit(updatedVisit.getReasonForVisit());
-
-        visitRepository.save(existingVisit);
+        medicalClinicService.updateVisit(id, updatedVisit);
         return "redirect:/AllVisit";
     }
 
     // Edit Doctor
     @GetMapping("/editDoctor/{id}")
     public String showEditDoctorForm(@PathVariable Long id, Model model) {
-        Doctor doctor = doctorRepository.findById(id)
+        Doctor doctor = medicalClinicService.getAllDoctors().stream()
+                .filter(d -> d.getId().equals(id))
+                .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Doctor not found"));
         model.addAttribute("doctor", doctor);
         return "editDoctor";
@@ -213,27 +192,16 @@ public class MainController {
         if (bindingResult.hasErrors()) {
             return "editDoctor";
         }
-        Doctor existingDoctor = doctorRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Doctor not found"));
-
-        // Обновляем поля существующего врача
-        existingDoctor.setFirstName(updatedDoctor.getFirstName());
-        existingDoctor.setLastName(updatedDoctor.getLastName());
-        existingDoctor.setSpecialty(updatedDoctor.getSpecialty());
-        existingDoctor.setPhoneNumber(updatedDoctor.getPhoneNumber());
-        existingDoctor.setWorkStartTime(updatedDoctor.getWorkStartTime());
-        existingDoctor.setWorkEndTime(updatedDoctor.getWorkEndTime());
-        existingDoctor.setExperienceLevel(updatedDoctor.getExperienceLevel());
-        existingDoctor.setRating(updatedDoctor.getRating());
-
-        doctorRepository.save(existingDoctor);
+        medicalClinicService.updateDoctor(id, updatedDoctor);
         return "redirect:/AllDoctor";
     }
 
     // Edit Medication
     @GetMapping("/editMedication/{id}")
     public String showEditMedicationForm(@PathVariable Long id, Model model) {
-        Medication medication = medicationRepository.findById(id)
+        Medication medication = medicalClinicService.getAllMedications().stream()
+                .filter(m -> m.getId().equals(id))
+                .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Medication not found"));
         model.addAttribute("medication", medication);
         return "editMedication";
@@ -244,40 +212,32 @@ public class MainController {
         if (bindingResult.hasErrors()) {
             return "editMedication";
         }
-        Medication existingMedication = medicationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Medication not found"));
-
-        // Обновляем поля существующего лекарства
-        existingMedication.setDiagnosis(updatedMedication.getDiagnosis());
-        existingMedication.setName(updatedMedication.getName());
-        existingMedication.setDosage(updatedMedication.getDosage());
-
-        medicationRepository.save(existingMedication);
+        medicalClinicService.updateMedication(id, updatedMedication);
         return "redirect:/AllMedication";
     }
 
     // Delete
     @PostMapping("/deletePatient/{id}")
     public String deletePatient(@PathVariable Long id) {
-        patientRepository.deleteById(id);
+        medicalClinicService.deletePatient(id);
         return "redirect:/AllPatient";
     }
 
     @PostMapping("/deleteVisit/{id}")
     public String deleteVisit(@PathVariable Long id) {
-        visitRepository.deleteById(id);
+        medicalClinicService.deleteVisit(id);
         return "redirect:/AllVisit";
     }
 
     @PostMapping("/deleteDoctor/{id}")
     public String deleteDoctor(@PathVariable Long id) {
-        doctorRepository.deleteById(id);
+        medicalClinicService.deleteDoctor(id);
         return "redirect:/AllDoctor";
     }
 
     @PostMapping("/deleteMedication/{id}")
     public String deleteMedication(@PathVariable Long id) {
-        medicationRepository.deleteById(id);
+        medicalClinicService.deleteMedication(id);
         return "redirect:/AllMedication";
     }
 }

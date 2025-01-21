@@ -1,0 +1,8 @@
+.navbar-brand{
+    color: black !important;
+    transition-duration: 200ms !important;
+}
+
+.navbar-brand:hover{
+    color: #FFD11A !important;
+}

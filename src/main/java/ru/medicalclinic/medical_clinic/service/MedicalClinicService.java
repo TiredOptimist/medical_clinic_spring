@@ -1,6 +1,7 @@
 package ru.medicalclinic.medical_clinic.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.medicalclinic.medical_clinic.entity.*;
@@ -9,6 +10,7 @@ import ru.medicalclinic.medical_clinic.repository.*;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class MedicalClinicService {
@@ -58,131 +60,70 @@ public class MedicalClinicService {
         medicationRepository.save(medication);
     }
 
-    @Transactional
     public void updateDoctor(Long id, Doctor doctorDetails) {
+        // Находим врача по ID
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Врач не найден: " + id));
+
+        // Обновляем имя и фамилию врача
+        doctor.setFirstName(doctorDetails.getFirstName());
+        doctor.setLastName(doctorDetails.getLastName());
+
+        // Сохраняем изменения имени и фамилии
+        doctorRepository.save(doctor);
+
         try {
-            // Находим врача по ID
-            Doctor doctor = doctorRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Врач не найден: " + id));
-
-            // Обновляем имя и фамилию врача
-            doctor.setFirstName(doctorDetails.getFirstName());
-            doctor.setLastName(doctorDetails.getLastName());
-
-            // Сохраняем точку сохранения
+            // Создаем чекпоинт после обновления имени и фамилии
             actionService.saveCheckpoint();
 
             // Обновляем даты начала и окончания работы
             doctor.setWorkStartTime(doctorDetails.getWorkStartTime());
             doctor.setWorkEndTime(doctorDetails.getWorkEndTime());
 
-            // Проверяем, что дата начала работы раньше даты окончания
+            // Проверяем, что дата начала работы не позже даты окончания
             if (doctor.getWorkStartTime().isAfter(doctor.getWorkEndTime())) {
-                throw new IllegalArgumentException("Дата начала работы должна быть раньше даты окончания");
+                // Если даты некорректны, откатываемся до точки сохранения
+                actionService.performRollbackToLastCheckpoint();
+                log.warn("Дата начала работы позже даты окончания. Откат до точки сохранения.");
+            } else {
+                // Сохраняем изменения дат
+                doctorRepository.save(doctor);
+
+                // Фиксируем транзакцию
+                actionService.commitCheckpoint();
             }
-
-            // Сохраняем изменения
-            doctorRepository.save(doctor);
-
-            // Фиксируем транзакцию
-            actionService.commitCheckpoint();
-
-        } catch (IllegalArgumentException e) {
-            // Если даты некорректны, откатываем до точки сохранения
-            actionService.performRollbackToLastCheckpoint();
-
-            // Логируем ошибку
-            System.out.println("Даты работы не обновлены: " + e.getMessage());
-
         } catch (Exception e) {
-            // Если произошла другая ошибка, откатываем всю транзакцию
+            // Если произошла ошибка, откатываем всю транзакцию
             actionService.performRollbackToLastCheckpoint();
-            throw new RuntimeException("Ошибка при обновлении врача", e);
+            log.error("Ошибка при обновлении врача. Откат всей транзакции.", e);
         }
     }
 
     @Transactional
     public void updatePatient(Long id, Patient patientDetails) {
-        try {
-            // Находим пациента по ID
-            Patient patient = patientRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Пациент не найден: " + id));
-
-            // Обновляем имя и фамилию пациента
-            patient.setFirstName(patientDetails.getFirstName());
-            patient.setLastName(patientDetails.getLastName());
-
-            // Сохраняем точку сохранения
-            actionService.saveCheckpoint();
-
-            // Обновляем номер страховки
-            patient.setInsuranceNumber(patientDetails.getInsuranceNumber());
-
-            // Проверяем, что номер страховки уникален
-            if (patientRepository.existsByInsuranceNumber(patientDetails.getInsuranceNumber())) {
-                throw new IllegalArgumentException("Номер страховки уже существует");
-            }
-
-            // Сохраняем изменения
-            patientRepository.save(patient);
-
-            // Фиксируем транзакцию
-            actionService.commitCheckpoint();
-
-        } catch (IllegalArgumentException e) {
-            // Если номер страховки уже существует, откатываем до точки сохранения
-            actionService.performRollbackToLastCheckpoint();
-
-            // Логируем ошибку
-            System.out.println("Номер страховки не обновлен: " + e.getMessage());
-
-        } catch (Exception e) {
-            // Если произошла другая ошибка, откатываем всю транзакцию
-            actionService.performRollbackToLastCheckpoint();
-            throw new RuntimeException("Ошибка при обновлении пациента", e);
-        }
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid patient Id:" + id));
+        patient.setFirstName(patientDetails.getFirstName());
+        patient.setLastName(patientDetails.getLastName());
+        patient.setDateOfBirth(patientDetails.getDateOfBirth());
+        patient.setGender(patientDetails.getGender());
+        patient.setPhoneNumber(patientDetails.getPhoneNumber());
+        patient.setInsuranceNumber(patientDetails.getInsuranceNumber());
+        patient.setBloodType(patientDetails.getBloodType());
+        patientRepository.save(patient);
     }
 
     @Transactional
     public void updateVisit(Long id, Visit visitDetails) {
-        try {
-            // Находим визит по ID
-            Visit visit = visitRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Визит не найден: " + id));
-
-            // Обновляем причину визита
-            visit.setReasonForVisit(visitDetails.getReasonForVisit());
-
-            // Сохраняем точку сохранения
-            actionService.saveCheckpoint();
-
-            // Обновляем дату визита
-            visit.setVisitDate(visitDetails.getVisitDate());
-
-            // Проверяем, что дата визита не в прошлом
-            if (visit.getVisitDate().isBefore(LocalDate.now())) { // Используем LocalDate.now()
-                throw new IllegalArgumentException("Дата визита не может быть в прошлом");
-            }
-
-            // Сохраняем изменения
-            visitRepository.save(visit);
-
-            // Фиксируем транзакцию
-            actionService.commitCheckpoint();
-
-        } catch (IllegalArgumentException e) {
-            // Если дата визита в прошлом, откатываем до точки сохранения
-            actionService.performRollbackToLastCheckpoint();
-
-            // Логируем ошибку
-            System.out.println("Дата визита не обновлена: " + e.getMessage());
-
-        } catch (Exception e) {
-            // Если произошла другая ошибка, откатываем всю транзакцию
-            actionService.performRollbackToLastCheckpoint();
-            throw new RuntimeException("Ошибка при обновлении визита", e);
-        }
+        Visit visit = visitRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid visit Id:" + id));
+        visit.setDoctor(visitDetails.getDoctor());
+        visit.setPatient(visitDetails.getPatient());
+        visit.setVisitDate(visitDetails.getVisitDate());
+        visit.setReasonForVisit(visitDetails.getReasonForVisit());
+        visitRepository.save(visit);
     }
+
 
     @Transactional
     public void updateMedication(Long id, Medication medicationDetails) {

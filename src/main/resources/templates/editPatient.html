@@ -85,7 +85,17 @@
         </div>
         <div class="mb-3">
             <label for="bloodType" class="form-label">Группа крови</label>
-            <input type="text" class="form-control" id="bloodType" th:field="*{bloodType}" pattern="^(A|B|AB|O)[+-]$" title="Неверный формат группы крови">
+            <select class="form-select" id="bloodType" th:field="*{bloodType}" required>
+                <option value="">Выберите группу крови</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+            </select>
             <div th:if="${#fields.hasErrors('bloodType')}" th:errors="*{bloodType}" class="text-danger"></div>
         </div>
         <div class="mb-3">
